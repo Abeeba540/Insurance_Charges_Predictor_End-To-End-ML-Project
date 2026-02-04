@@ -1,9 +1,8 @@
-pandas
-numpy
-matplotlib
-seaborn
-scikit-learn
-dill
-os
-sys
-streamlit
+streamlit==1.19.0
+pandas==1.5.3
+numpy==1.24.4
+scikit-learn==1.2.2
+matplotlib==3.7.5
+seaborn==0.12.2
+dill==0.3.8
+altair==4.2.2
