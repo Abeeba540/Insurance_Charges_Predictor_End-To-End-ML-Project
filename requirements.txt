@@ -4,6 +4,4 @@ matplotlib
 seaborn
 scikit-learn
 dill
-os
-sys
 streamlit
