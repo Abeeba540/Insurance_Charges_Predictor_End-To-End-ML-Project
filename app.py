@@ -1,68 +1,49 @@
-import os
-
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import numpy as np
+import os
 
 from src.utils import load_object
 
+# Page config
+st.set_page_config(page_title="Insurance Charges Predictor", layout="centered")
 
-def get_artifact_path(filename):
-    return os.path.join(os.path.dirname(__file__), "artifacts", filename)
+st.title("💰 Insurance Charges Prediction")
+st.write("Enter customer details to predict insurance charges")
 
+# Load artifacts
+MODEL_PATH = os.path.join("artifacts", "model.pkl")
+PREPROCESSOR_PATH = os.path.join("artifacts", "preprocessor.pkl")
 
-st.set_page_config(page_title="Insurance Charges Predictor", page_icon="🩺")
+model = load_object(MODEL_PATH)
+preprocessor = load_object(PREPROCESSOR_PATH)
 
-st.title("Insurance Charges Predictor")
-st.write(
-    "Provide the details below to estimate insurance charges using the trained model."
-)
+# User input form
+age = st.number_input("Age", min_value=18, max_value=100, value=30)
+bmi = st.number_input("BMI", min_value=10.0, max_value=50.0, value=25.0)
+children = st.number_input("Number of Children", min_value=0, max_value=5, value=0)
 
-model_path = get_artifact_path("model.pkl")
-preprocessor_path = get_artifact_path("preprocessor.pkl")
+sex = st.selectbox("Sex", ["male", "female"])
+smoker = st.selectbox("Smoker", ["yes", "no"])
+region = st.selectbox("Region", ["southwest", "southeast", "northwest", "northeast"])
 
-try:
-    model = load_object(model_path)
-    preprocessor = load_object(preprocessor_path)
-except Exception as exc:
-    st.error(
-        "Unable to load model artifacts. Ensure 'artifacts/model.pkl' and "
-        "'artifacts/preprocessor.pkl' exist before running the app."
-    )
-    st.exception(exc)
-    st.stop()
+# Predict button
+if st.button("Predict Insurance Charges"):
+    
+    # Create input DataFrame
+    input_data = pd.DataFrame({
+        "age": [age],
+        "bmi": [bmi],
+        "children": [children],
+        "sex": [sex],
+        "smoker": [smoker],
+        "region": [region]
+    })
 
-with st.form("prediction_form"):
-    col1, col2, col3 = st.columns(3)
+    # Preprocess input
+    transformed_data = preprocessor.transform(input_data)
 
-    with col1:
-        age = st.number_input("Age", min_value=18, max_value=100, value=30)
-        bmi = st.number_input("BMI", min_value=10.0, max_value=60.0, value=25.0)
+    # Prediction
+    prediction = model.predict(transformed_data)[0]
 
-    with col2:
-        children = st.number_input("Children", min_value=0, max_value=10, value=0)
-        sex = st.selectbox("Sex", options=["female", "male"])
-
-    with col3:
-        smoker = st.selectbox("Smoker", options=["yes", "no"])
-        region = st.selectbox(
-            "Region", options=["southeast", "southwest", "northwest", "northeast"]
-        )
-
-    submitted = st.form_submit_button("Predict Charges")
-
-if submitted:
-    input_df = pd.DataFrame(
-        {
-            "age": [age],
-            "bmi": [bmi],
-            "children": [children],
-            "sex": [sex],
-            "smoker": [smoker],
-            "region": [region],
-        }
-    )
-
-    transformed = preprocessor.transform(input_df)
-    prediction = model.predict(transformed)[0]
-
-    st.success(f"Estimated Insurance Charges: ${prediction:,.2f}")
+    st.success(f"💵 Estimated Insurance Charges: ₹ {prediction:,.2f}")
